@@ -8,6 +8,7 @@
 #include <netinet/in.h>  // constants and structures needed for internet domain addresses, e.g. sockaddr_in
 #include <stdlib.h>
 #include <strings.h>
+#include <fcntl.h>
 
 void error(char *msg)
 {
@@ -58,14 +59,43 @@ int main(int argc, char *argv[])
      newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
      if (newsockfd < 0) 
           error("ERROR on accept");
-     
-     bzero(buffer,256);
-	while( read(newsockfd,buffer,255) != NULL) //added this loop to get all of the header info
-	{
-	   //  n = read(newsockfd,buffer,255); //Read is a block function. It will read at most 255 bytes
-	    // if (n < 0) error("ERROR reading from socket");
-		printf("%s",buffer);
-	}
+
+     bzero(buffer,4000);
+     n = read(newsockfd,buffer,4000); //Read is a block function. It will read at most 255 bytes
+     if (n < 0) error("ERROR reading from socket");
+        printf("%s\n",buffer);
+
+     //testing out sending a picture!
+     char pictureFileName[ 50 ] = "maru.jpg\0";
+     int pictureFd = open( pictureFileName, O_RDONLY );
+     if ( pictureFd == -1 ) {
+       error( "Error on opening file" );
+     }
+     int read_count;
+     int write_count = 0;
+     char pictureBuf[ 1024 ];
+     char* bufferPtr;
+     while( ( read_count = read( pictureFd, pictureBuf, 1024 ) ) > 0 ) {
+       write_count = 0;
+       bufferPtr = pictureBuf;
+       while ( write_count < read_count ) {
+	 read_count -= write_count;
+	 bufferPtr += write_count;
+	 write_count = write( newsockfd, bufferPtr, read_count );
+	 if ( write_count == -1 ) {
+	   error( "Socket read error" );
+	 }
+       }
+     }     
+
+     //commented it out for now because the server was crashing for some reason
+/*      bzero(buffer,256); */
+/*      while( read(newsockfd,buffer,255) > 0) //added this loop to get all of the header info */
+/*      { */
+/*        //  n = read(newsockfd,buffer,255); //Read is a block function. It will read at most 255 bytes */
+/*        // if (n < 0) error("ERROR reading from socket"); */
+/*        printf("%s",buffer); */
+/*      } */
      
      n = write(newsockfd,"I got your message",18); //NOTE: write function returns the number of bytes actually sent out Ñ> this might be less than the number you told it to send
      if (n < 0) error("ERROR writing to socket");
