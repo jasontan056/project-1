@@ -8,6 +8,7 @@
 #include <netinet/in.h>  // constants and structures needed for internet domain addresses, e.g. sockaddr_in
 #include <stdlib.h>
 #include <strings.h>
+#include <string.h>
 
 void error(char *msg)
 {
@@ -21,7 +22,8 @@ int main(int argc, char *argv[])
      int portno; // port number
      socklen_t clilen;
      
-     char buffer[4000];
+     char buffer[256];
+     char store_buffer[8000];
      
      /*sockaddr_in: Structure Containing an Internet Address*/
      struct sockaddr_in serv_addr, cli_addr;
@@ -64,9 +66,33 @@ int main(int argc, char *argv[])
 	{
 	   //  n = read(newsockfd,buffer,255); //Read is a block function. It will read at most 255 bytes
 	    // if (n < 0) error("ERROR reading from socket");
-		printf("%s",buffer);
+		//printf("%s",buffer);
+		strcat(store_buffer,buffer);
 	}
-     
+
+/*************** This is a block of code to parse for the requested file *********/
+
+	const char *http_tok = "HTTP";
+	char * ptr;
+	ptr = strstr(store_buffer, http_tok); //find the location of the HTTP word.
+	const void * store_buffer_sans = (const void *)store_buffer+4; //Ptr to the request message after GET_
+
+	int get_length = strlen(store_buffer); //Get the length of the entire request message from 'GET' onward
+	int http_length = strlen(ptr); //Get the length of the request message from 'HTTP' onward
+
+	char file_name_buffer[get_length-http_length]; //Declaration for the buffer that will hold the requested file
+	memcpy(file_name_buffer,store_buffer_sans,(get_length-http_length)); //copy the file name
+
+	file_name_buffer[get_length-http_length-5] = '\0';
+
+	printf("http length %i\n", http_length);
+	printf("get length %i\n", get_length);
+	printf("the html address is %s\n",file_name_buffer);
+
+/******************************End Parser****************************************************/
+
+
+
      n = write(newsockfd,"I got your message",18); //NOTE: write function returns the number of bytes actually sent out Ñ> this might be less than the number you told it to send
      if (n < 0) error("ERROR writing to socket");
      
