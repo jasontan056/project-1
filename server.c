@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
      int portno; // port number
      socklen_t clilen;
      
-     char buffer[256];
+     char buffer[4000];
      
      /*sockaddr_in: Structure Containing an Internet Address*/
      struct sockaddr_in serv_addr, cli_addr;
@@ -60,9 +60,12 @@ int main(int argc, char *argv[])
           error("ERROR on accept");
      
      bzero(buffer,256);
-     n = read(newsockfd,buffer,255); //Read is a block function. It will read at most 255 bytes
-     if (n < 0) error("ERROR reading from socket");
-        printf("Here is the message: %s\n",buffer);
+	while( read(newsockfd,buffer,255) != NULL) //added this loop to get all of the header info
+	{
+	   //  n = read(newsockfd,buffer,255); //Read is a block function. It will read at most 255 bytes
+	    // if (n < 0) error("ERROR reading from socket");
+		printf("%s",buffer);
+	}
      
      n = write(newsockfd,"I got your message",18); //NOTE: write function returns the number of bytes actually sent out Ñ> this might be less than the number you told it to send
      if (n < 0) error("ERROR writing to socket");
