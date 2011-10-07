@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 	char file_name_buffer[get_length-http_length]; //Declaration for the buffer that will hold the requested file
 	memcpy(file_name_buffer,store_buffer_sans,(get_length-http_length)); //copy the file name
 
-	file_name_buffer[get_length-http_length-6] = '\0';
+	file_name_buffer[get_length-http_length-6] = '\0'; //this is was just trial and error, need to make sure the 6 is logical.
 
 	printf("http length %i\n", http_length);
 	printf("get length %i\n", get_length);
@@ -86,8 +86,8 @@ int main(int argc, char *argv[])
 
 /******************************End Parser****************************************************/
      //testing out sending a picture!
-     char pictureFileName[ 50 ] = "maru.jpg\0";
-     int pictureFd = open( file_name_buffer, O_RDONLY );
+    // char pictureFileName[ 50 ] = "maru.jpg\0";
+     int pictureFd = open( file_name_buffer, O_RDONLY ); //changed this to receive my file_name_buffer
      if ( pictureFd == -1 ) {
        error( "Error on opening file" );
      }
