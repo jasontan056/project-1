@@ -49,15 +49,15 @@ int main(int argc, char *argv[])
      
      if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) //Bind the socket to the server address
               error("ERROR on binding");
-      for(;;){ //this infinite loop is so that we can do multiple requests on one socket and thus have pictures in html files
 	     listen(sockfd,5); // Listen for socket connections. Backlog queue (connections to wait) is 5
-	     
+	     //newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+	     	     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+      for(;;){ //this infinite loop is so that we can do multiple requests on one socket and thus have pictures in html files
 	     clilen = sizeof(cli_addr);
 	     /*accept function: 
 	       1) Block until a new connection is established
 	       2) the new socket descriptor will be used for subsequent communication with the newly connected client.
 	     */
-	     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
 	     if (newsockfd < 0) 
 		  error("ERROR on accept");
 
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 	/*        printf("%s",buffer); */
 	/*      } */
 	     
-	     n = write(newsockfd,"I got your message",18); //NOTE: write function returns the number of bytes actually sent out Ñ> this might be less than the number you told it to send
+	    // n = write(newsockfd,"I got your message",18); //NOTE: write function returns the number of bytes actually sent out Ñ> this might be less than the number you told it to send
 	     if (n < 0) error("ERROR writing to socket");
       }
      close(sockfd);

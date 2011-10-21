@@ -4,6 +4,7 @@
 #include <netinet/in.h>  // constants and structures needed for internet domain addresses, e.g. sockaddr_in
 #include <stdlib.h>
 #include <strings.h>
+#include <string.h>
 #include <sys/wait.h>	/* for the waitpid() system call */
 #include <signal.h>	/* signal name macros, and the kill() prototype */
 #include <fcntl.h>
@@ -65,7 +66,8 @@ int main(int argc, char *argv[])
     exit(1);
   }
   /*********************************/
-     
+ //newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+  //printf ("creating a new socket!\n");
   while (1) {
     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
     printf ("creating a new socket!\n");
@@ -84,7 +86,8 @@ int main(int argc, char *argv[])
       exit(0);
     }
     else //returns the process ID of the child process to the parent
-      close(newsockfd); // parent doesn't need this 
+	continue;
+    //  close(newsockfd); // parent doesn't need this 
   } /* end of while */
   return 0; /* we never get here */
 }
@@ -98,15 +101,15 @@ void serveClient (int sock)
   
   //keeps connection open if Connection = keep-alive
   persistent = 1;
-  //  do {
+    do {
     //read the http request and print it out
     bzero(requestBuffer,4000);
     nr = read(sock,requestBuffer,4000);
-    if (nr < 0) error("ERROR reading from socket");
-    printf("%s",requestBuffer);
-
+    if (nr < 0) 
+	error("ERROR reading from socket");
+    printf("%s \n",requestBuffer);
     contentType = NULL;
-    parseSuccess = parseRequest(requestBuffer, &fileFd, &contentType,
+   parseSuccess = parseRequest(requestBuffer, &fileFd, &contentType,
 				&httpVer, &persistent);
     if (parseSuccess == 0){
       sendResponse(sock, fileFd, httpVer, persistent, contentType);
@@ -117,7 +120,7 @@ void serveClient (int sock)
     if (contentType != NULL) {
       free(contentType);
     }
-    //  } while (persistent == 1);
+      } while (persistent == 1);
 }
 
 // parses through the http request
