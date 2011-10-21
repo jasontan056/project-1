@@ -17,10 +17,9 @@ void sigchld_handler(int s)
 
 void serveClient(int);
 int parseRequest(char requestBuffer[], int* fileFd, char** contentType,
-		 int* httpVer, int* persistent);
+		 int* httpVer);
 char* contentTypeFinder(char* fileName);
-int sendResponse(int sock, int fileFd, const int httpVer,
-		 const int persistent, const char* contentType);
+int sendResponse(int sock, int fileFd, const int httpVer, const char* contentType);
 int sendBadResponse(int sock);
 void error(char *msg)
 {
@@ -68,8 +67,6 @@ int main(int argc, char *argv[])
      
   while (1) {
     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-    printf ("creating a new socket!\n");
-         
     if (newsockfd < 0) 
       error("ERROR on accept");
          
@@ -89,43 +86,38 @@ int main(int argc, char *argv[])
   return 0; /* we never get here */
 }
 
-// serves content for each client, maintaining a persistent connection
+// serves content for each client
 void serveClient (int sock)
 {
-  int nr, httpVer, persistent, parseSuccess, fileSuccess, contentTypeSuccess, fileFd;
+  int nr, httpVer, parseSuccess, fileSuccess, contentTypeSuccess, fileFd;
   char* contentType;
   char requestBuffer[4000];
   
-  //keeps connection open if Connection = keep-alive
-  persistent = 1;
-  //  do {
-    //read the http request and print it out
-    bzero(requestBuffer,4000);
-    nr = read(sock,requestBuffer,4000);
-    if (nr < 0) error("ERROR reading from socket");
-    printf("%s",requestBuffer);
+  //read the http request and print it out
+  bzero(requestBuffer,4000);
+  nr = read(sock,requestBuffer,4000);
+  if (nr < 0) error("ERROR reading from socket");
+  printf("%s",requestBuffer);
 
-    contentType = NULL;
-    parseSuccess = parseRequest(requestBuffer, &fileFd, &contentType,
-				&httpVer, &persistent);
-    if (parseSuccess == 0){
-      sendResponse(sock, fileFd, httpVer, persistent, contentType);
-      close(fileFd);
-    } else {
-      sendBadResponse(sock);
-    }
-    if (contentType != NULL) {
-      free(contentType);
-    }
-    //  } while (persistent == 1);
+  contentType = NULL;
+  parseSuccess = parseRequest(requestBuffer, &fileFd, &contentType,
+			      &httpVer);
+  if (parseSuccess == 0){
+    sendResponse(sock, fileFd, httpVer, contentType);
+    close(fileFd);
+  } else {
+    sendBadResponse(sock);
+  }
+  if (contentType != NULL) {
+    free(contentType);
+  }
 }
 
 // parses through the http request
-// connection should be persistent
 // httpVer is 0 for 1.0, and 1 for 1.1
 // returns 0 on success, -1 on failure
 int parseRequest(char requestBuffer[], int* fileFd, char** contentType,
-		 int* httpVer, int* persistent) {
+		 int* httpVer) {
   int fileNameLen;
   char* fileName;
   char* fileNameEnd;
@@ -175,13 +167,6 @@ int parseRequest(char requestBuffer[], int* fileFd, char** contentType,
   } else {
     return -1;
   }
-
-  // get if the connection should be persistent
-  if (strstr(requestBuffer, "Connection: keep-alive")) {
-    *persistent = 1;
-  } else {
-    *persistent = 0;
-  }
   
   return 0;
 }
@@ -218,22 +203,16 @@ char* contentTypeFinder(char* fileName) {
   }
 }
 
-int sendResponse(int sock, int fileFd, const int httpVer,
-		 const int persistent, const char* contentType) {
+int sendResponse(int sock, int fileFd, const int httpVer, const char* contentType) {
   char buffer[1024];
   char* headerPosPtr;
   char* filePosPtr;
-  char *connection;
   int nr, nw, stringlen;
+
   // format the http header
-  if (persistent == 1) {
-    connection = "keep-alive";
-  } else {
-    connection = "close";
-  }
-  sprintf(buffer, "HTTP/1.%i 200 OK\r\nContent-Type: %s\r\nConnection: %s\r\n\r\n",
-	  httpVer, contentType, connection);
-  
+  sprintf(buffer, "HTTP/1.%i 200 OK\r\nContent-Type: %s\r\n\r\n",
+	  httpVer, contentType);
+
   // send the http header
   nw = 0;
   stringlen = strlen(buffer);
@@ -280,4 +259,3 @@ int sendBadResponse(int sock) {
     }
   }
 }
-  
